@@ -48,6 +48,48 @@
         <button class="cancel-btn" id="cancelDurationBtn">[Cancel]</button>
     </div>
 
+    <!-- Lobby/Waiting Page -->
+    <div id="lobbyPage" class="page">
+        <div class="lobby-content">
+            <div class="session-info">
+                <p class="session-code-label">Session Code: <span id="lobbySessionCode">482913</span></p>
+                <p class="share-links">
+                    <button class="link-btn" id="copyLinkBtn">[Copy Link]</button>
+                    <button class="link-btn" id="shareBtn">[Share]</button>
+                </p>
+            </div>
+
+            <div class="session-details">
+                <p>Duration: <span id="lobbyDuration">10 minutes</span></p>
+            </div>
+
+            <div class="players-section">
+                <p class="players-header">Players (<span id="playerCount">2</span>/4):</p>
+                <div class="players-list">
+                    <div class="player-item">
+                        <span class="player-icon">👤</span>
+                        <span class="player-name">Alice (Host)</span>
+                        <span class="player-ready">✓</span>
+                    </div>
+                    <div class="player-item">
+                        <span class="player-icon">👤</span>
+                        <span class="player-name">Bob</span>
+                        <span class="player-ready">✓</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="waiting-message">
+                <p>Waiting for host to start...</p>
+            </div>
+
+            <div class="lobby-actions">
+                <button class="menu-btn" id="startSessionBtn">[Start Session]</button>
+                <button class="link-btn" id="leaveLobbyBtn">[Leave]</button>
+            </div>
+        </div>
+    </div>
+
     <script src="popup.js"></script>
 </body>
 

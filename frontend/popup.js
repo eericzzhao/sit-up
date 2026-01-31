@@ -1,7 +1,7 @@
-// Page navigation
 const pages = {
     mainMenu: document.getElementById('mainMenuPage'),
-    duration: document.getElementById('durationPage')
+    duration: document.getElementById('durationPage'),
+    lobby: document.getElementById('lobbyPage')
 };
 
 function showPage(pageName) {
@@ -23,12 +23,39 @@ document.getElementById('joinSessionBtn').addEventListener('click', () => {
 document.querySelectorAll('.duration-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         const duration = parseInt(btn.dataset.duration);
+        const minutes = duration / 60;
         console.log('Selected duration:', duration, 'seconds');
-        // TODO: Create session with selected duration
+
+        // Update lobby page with selected duration
+        document.getElementById('lobbyDuration').textContent = `${minutes} minutes`;
+
+        // Go to lobby page
+        showPage('lobby');
     });
 });
 
 // Cancel button
 document.getElementById('cancelDurationBtn').addEventListener('click', () => {
+    showPage('mainMenu');
+});
+
+// Lobby page actions
+document.getElementById('copyLinkBtn').addEventListener('click', () => {
+    const sessionCode = document.getElementById('lobbySessionCode').textContent;
+    navigator.clipboard.writeText(`Join session: ${sessionCode}`);
+    console.log('Link copied to clipboard');
+});
+
+document.getElementById('shareBtn').addEventListener('click', () => {
+    console.log('Share clicked');
+    // TODO: Implement share functionality
+});
+
+document.getElementById('startSessionBtn').addEventListener('click', () => {
+    console.log('Starting session...');
+    // TODO: Navigate to active session page
+});
+
+document.getElementById('leaveLobbyBtn').addEventListener('click', () => {
     showPage('mainMenu');
 });

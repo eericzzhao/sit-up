@@ -190,3 +190,134 @@ h1 {
 .cancel-btn:hover {
     color: #e0e0e0;
 }
+
+/* Lobby/Waiting Page */
+.lobby-content {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.session-info {
+    text-align: left;
+}
+
+.session-code-label {
+    font-size: 16px;
+    color: #e0e0e0;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+}
+
+.session-code-label span {
+    color: #e0e0e0;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.share-links {
+    margin-top: 8px;
+}
+
+.link-btn {
+    background: transparent;
+    border: none;
+    color: #8a8a8a;
+    padding: 0;
+    margin-right: 15px;
+    font-size: 14px;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+}
+
+.link-btn:hover {
+    color: #e0e0e0;
+}
+
+.session-details {
+    color: #a0a0a0;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+.session-details span {
+    color: #e0e0e0;
+}
+
+.players-section {
+    margin: 10px 0;
+}
+
+.players-header {
+    font-size: 14px;
+    color: #a0a0a0;
+    margin-bottom: 15px;
+    letter-spacing: 1px;
+}
+
+.players-header span {
+    color: #e0e0e0;
+}
+
+.players-list {
+    border: 2px solid #5a5a5a;
+    padding: 20px;
+}
+
+.player-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.player-item:last-child {
+    margin-bottom: 0;
+}
+
+.player-icon {
+    font-size: 18px;
+    color: #6a9fb5;
+}
+
+.player-name {
+    flex: 1;
+    color: #e0e0e0;
+    letter-spacing: 1px;
+}
+
+.player-ready {
+    color: #4CAF50;
+    font-size: 16px;
+}
+
+.waiting-message {
+    text-align: left;
+    color: #a0a0a0;
+    font-size: 14px;
+    letter-spacing: 1px;
+    margin: 10px 0;
+}
+
+.lobby-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.lobby-actions .menu-btn {
+    font-size: 14px;
+    padding: 15px 30px;
+}
+
+.lobby-actions .link-btn {
+    text-align: center;
+    padding: 10px;
+    font-size: 14px;
+}
