@@ -1,6 +1,7 @@
 const WebSocket = require("ws");
 const sessionManager = require("./sessionManager");
-const { analyzePosture } = require("./eyepop");
+const eyePopService = require("./eyepop");
+const { analyzePosture } = require("./normalize");
 
 class WebSocketServer {
   constructor(server) {
