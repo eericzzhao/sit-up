@@ -1,0 +1,13 @@
+{
+    "manifest_version": 3,
+    "name": "Sit-Up",
+    "version": "1.0.0",
+    "description": "Gamified posture checking",
+    "permissions": [
+        "storage",
+        "notifications"
+    ],
+    "action": {
+        "default_popup": "popup/popup.html"
+    }
+}
