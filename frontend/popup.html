@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sit-Up</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Main Menu Page -->
+    <div id="mainMenuPage" class="page active">
+        <div class="main-header">
+            <h1>Sit Up!</h1>
+            <p class="subtitle">Compete for Perfect Posture</p>
+        </div>
+
+        <div class="main-menu">
+            <button class="menu-btn" id="createSessionBtn">Create Session</button>
+            <button class="menu-btn" id="joinSessionBtn">Join Session</button>
+        </div>
+
+        <div class="how-to-play">
+            <h3>How to Play:</h3>
+            <ol>
+                <li>Create or join session</li>
+                <li>Maintain good posture</li>
+                <li>Stay in green zone longest</li>
+                <li>Win!</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- Duration Selection Page -->
+    <div id="durationPage" class="page">
+        <div class="duration-header">
+            <h1>Select Session Duration</h1>
+        </div>
+
+        <div class="duration-grid">
+            <button class="duration-btn" data-duration="300">15 MIN</button>
+            <button class="duration-btn" data-duration="600">30 MIN</button>
+            <button class="duration-btn" data-duration="900">45 MIN</button>
+            <button class="duration-btn" data-duration="1800">60 MIN</button>
+        </div>
+
+        <button class="cancel-btn" id="cancelDurationBtn">[Cancel]</button>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>
