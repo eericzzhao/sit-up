@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PosturePal Multiplayer Demo</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        padding: 40px;
+        max-width: 800px;
+        width: 100%;
+      }
+
+      h1 {
+        color: #667eea;
+        margin-bottom: 10px;
+        font-size: 2.5em;
+      }
+
+      .subtitle {
+        color: #666;
+        margin-bottom: 30px;
+      }
+
+      .section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        display: none;
+      }
+
+      .section.active {
+        display: block;
+      }
+
+      input,
+      button,
+      select {
+        width: 100%;
+        padding: 12px 20px;
+        margin: 10px 0;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+      }
+
+      button {
+        background: #667eea;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s;
+      }
+
+      button:hover {
+        background: #5568d3;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+      }
+
+      button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .status {
+        padding: 15px;
+        border-radius: 8px;
+        margin: 10px 0;
+        font-weight: 500;
+      }
+
+      .status.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+
+      .status.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+
+      .status.info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+
+      .players-list {
+        list-style: none;
+        margin: 15px 0;
+      }
+
+      .player-item {
+        padding: 12px;
+        margin: 8px 0;
+        background: white;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .leaderboard-item {
+        padding: 15px;
+        margin: 10px 0;
+        background: white;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 500;
+      }
+
+      .rank {
+        font-size: 1.5em;
+        color: #667eea;
+        min-width: 40px;
+      }
+
+      .score {
+        font-size: 1.2em;
+        color: #28a745;
+      }
+
+      .timer {
+        font-size: 2em;
+        text-align: center;
+        color: #667eea;
+        font-weight: bold;
+        margin: 20px 0;
+      }
+
+      .connection-status {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 8px;
+      }
+
+      .connection-status.connected {
+        background: #28a745;
+      }
+
+      .connection-status.disconnected {
+        background: #dc3545;
+      }
+
+      code {
+        background: #e9ecef;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: "Courier New", monospace;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .tab {
+        flex: 1;
+        padding: 12px;
+        background: #e9ecef;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      .tab.active {
+        background: #667eea;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🎮 PosturePal Multiplayer</h1>
+      <p class="subtitle">Compete with friends for the best posture!</p>
+
+      <div class="status info" id="status">
+        <span class="connection-status disconnected"></span>
+        Ready to connect
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" onclick="showTab('create')">
+          Create Game
+        </button>
+        <button class="tab" onclick="showTab('join')">Join Game</button>
+      </div>
+
+      <!-- Create Session Section -->
+      <div class="section active" id="create-section">
+        <h2>Create New Game</h2>
+        <input
+          type="text"
+          id="host-username"
+          placeholder="Your username"
+          value="Player1"
+        />
+        <select id="duration" onchange="handleDurationChange()">
+          <option value="1">1 minute (testing)</option>
+          <option value="15" selected>15 minutes</option>
+          <option value="30">30 minutes</option>
+          <option value="45">45 minutes</option>
+          <option value="60">60 minutes (1 hour)</option>
+          <option value="custom">Custom duration (60+ minutes)</option>
+        </select>
+        <div id="custom-duration-input" style="display: none; margin-top: 10px">
+          <input
+            type="number"
+            id="custom-duration"
+            placeholder="Enter minutes (60+)"
+            min="60"
+            style="margin-bottom: 5px"
+          />
+          <small style="color: #666; display: block; margin-bottom: 10px"
+            >Enter any duration 60 minutes or more (max 480 minutes)</small
+          >
+        </div>
+        <button onclick="createSession()">Create Game</button>
+      </div>
+
+      <!-- Join Session Section -->
+      <div class="section" id="join-section">
+        <h2>Join Existing Game</h2>
+        <input type="text" id="join-session-id" placeholder="Session ID" />
+        <input
+          type="text"
+          id="join-username"
+          placeholder="Your username"
+          value="Player2"
+        />
+        <button onclick="joinSession()">Join Game</button>
+      </div>
+
+      <!-- Lobby Section -->
+      <div class="section" id="lobby-section">
+        <h2>Game Lobby</h2>
+        <div class="status info">
+          <strong>Session ID:</strong> <code id="session-id-display">-</code>
+          <button
+            onclick="copySessionId()"
+            style="width: auto; margin-left: 10px"
+          >
+            Copy
+          </button>
+        </div>
+        <h3>Players in Lobby:</h3>
+        <ul class="players-list" id="players-list"></ul>
+        <button onclick="startSession()" id="start-btn">Start Game</button>
+        <button onclick="leaveSession()" style="background: #dc3545">
+          Leave Game
+        </button>
+      </div>
+
+      <!-- Game Section -->
+      <div class="section" id="game-section">
+        <h2>Game In Progress</h2>
+        <div class="timer" id="timer">15:00</div>
+        <div class="status success">
+          Your Score:
+          <span id="my-score" style="font-size: 1.5em">0</span> points
+        </div>
+        <h3>🏆 Live Leaderboard</h3>
+        <div id="leaderboard"></div>
+      </div>
+
+      <!-- Results Section -->
+      <div class="section" id="results-section">
+        <h2>🎉 Game Complete!</h2>
+        <h3>Final Rankings</h3>
+        <div id="final-results"></div>
+        <button onclick="location.reload()">Play Again</button>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = "http://localhost:3000/api";
+      const WS_URL = "ws://localhost:3000";
+
+      let ws = null;
+      let userId =
+        localStorage.getItem("posturePalUserId") || crypto.randomUUID();
+      let sessionId = null;
+      let username = null;
+      let isHost = false;
+      let timerInterval = null;
+
+      localStorage.setItem("posturePalUserId", userId);
+
+      function showTab(tab) {
+        document
+          .querySelectorAll(".tab")
+          .forEach((t) => t.classList.remove("active"));
+        document
+          .querySelectorAll(".section")
+          .forEach((s) => s.classList.remove("active"));
+
+        event.target.classList.add("active");
+        if (tab === "create") {
+          document.getElementById("create-section").classList.add("active");
+        } else {
+          document.getElementById("join-section").classList.add("active");
+        }
+      }
+
+      function updateStatus(message, type = "info") {
+        const status = document.getElementById("status");
+        status.className = `status ${type}`;
+        status.innerHTML = `<span class="connection-status ${ws && ws.readyState === WebSocket.OPEN ? "connected" : "disconnected"}"></span>${message}`;
+      }
+
+      function connectWebSocket() {
+        ws = new WebSocket(WS_URL);
+
+        ws.onopen = () => {
+          updateStatus("Connected to server", "success");
+        };
+
+        ws.onmessage = (event) => {
+          const message = JSON.parse(event.data);
+          handleMessage(message);
+        };
+
+        ws.onerror = () => {
+          updateStatus("Connection error", "error");
+        };
+
+        ws.onclose = () => {
+          updateStatus("Disconnected", "error");
+        };
+      }
+
+      function handleMessage(message) {
+        const { type, payload } = message;
+
+        switch (type) {
+          case "registered":
+            updateStatus("Registered to session", "success");
+            break;
+
+          case "posture_feedback":
+            document.getElementById("my-score").textContent =
+              payload.currentScore || 0;
+            break;
+
+          case "leaderboard_update":
+            updateLeaderboard(payload.leaderboard);
+            break;
+
+          case "player_joined":
+            updatePlayersList(payload.players);
+            break;
+
+          case "error":
+            updateStatus(payload.error, "error");
+            break;
+        }
+      }
+
+      function handleDurationChange() {
+        const select = document.getElementById("duration");
+        const customInput = document.getElementById("custom-duration-input");
+
+        if (select.value === "custom") {
+          customInput.style.display = "block";
+        } else {
+          customInput.style.display = "none";
+        }
+      }
+
+      async function createSession() {
+        username = document.getElementById("host-username").value || "Player1";
+        const durationSelect = document.getElementById("duration").value;
+        let duration;
+
+        if (durationSelect === "custom") {
+          const customDuration = parseInt(
+            document.getElementById("custom-duration").value,
+          );
+          if (!customDuration || customDuration < 60) {
+            updateStatus(
+              "Please enter a duration of 60 minutes or more",
+              "error",
+            );
+            return;
+          }
+          if (customDuration > 480) {
+            updateStatus("Maximum duration is 8 hours (480 minutes)", "error");
+            return;
+          }
+          duration = customDuration;
+        } else {
+          duration = parseInt(durationSelect);
+        }
+
+        try {
+          const response = await fetch(`${API_BASE}/session/create`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, username, duration }),
+          });
+
+          const data = await response.json();
+          if (data.success) {
+            sessionId = data.sessionId;
+            isHost = true;
+            connectWebSocket();
+            setTimeout(() => registerToSession(), 500);
+            showLobby();
+          }
+        } catch (error) {
+          updateStatus("Failed to create session: " + error.message, "error");
+        }
+      }
+
+      async function joinSession() {
+        sessionId = document.getElementById("join-session-id").value;
+        username = document.getElementById("join-username").value || "Player2";
+
+        try {
+          const response = await fetch(`${API_BASE}/session/join`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sessionId, userId, username }),
+          });
+
+          const data = await response.json();
+          if (data.success) {
+            connectWebSocket();
+            setTimeout(() => registerToSession(), 500);
+            showLobby();
+          }
+        } catch (error) {
+          updateStatus("Failed to join session: " + error.message, "error");
+        }
+      }
+
+      function registerToSession() {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(
+            JSON.stringify({
+              type: "register",
+              payload: { userId, sessionId },
+            }),
+          );
+        }
+      }
+
+      function showLobby() {
+        document
+          .querySelectorAll(".section")
+          .forEach((s) => s.classList.remove("active"));
+        document.getElementById("lobby-section").classList.add("active");
+        document.getElementById("session-id-display").textContent = sessionId;
+        document.getElementById("start-btn").disabled = !isHost;
+        loadSession();
+      }
+
+      async function loadSession() {
+        const response = await fetch(`${API_BASE}/session/${sessionId}`);
+        const data = await response.json();
+
+        if (data.session.players) {
+          updatePlayersList(Array.from(Object.values(data.session.players)));
+        }
+      }
+
+      function updatePlayersList(players) {
+        const list = document.getElementById("players-list");
+        list.innerHTML = players
+          .map(
+            (p) => `
+        <li class="player-item">
+          <span>${p.username} ${p.isHost ? "👑" : ""}</span>
+          <span style="color: ${p.connected ? "#28a745" : "#dc3545"}">
+            ${p.connected ? "● Online" : "○ Offline"}
+          </span>
+        </li>
+      `,
+          )
+          .join("");
+      }
+
+      async function startSession() {
+        try {
+          const response = await fetch(`${API_BASE}/session/start`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sessionId, userId }),
+          });
+
+          const data = await response.json();
+          if (data.success) {
+            showGame(data.session);
+          }
+        } catch (error) {
+          updateStatus("Failed to start session: " + error.message, "error");
+        }
+      }
+
+      function showGame(session) {
+        document
+          .querySelectorAll(".section")
+          .forEach((s) => s.classList.remove("active"));
+        document.getElementById("game-section").classList.add("active");
+
+        const endTime = session.endTime;
+        updateTimer(endTime);
+        timerInterval = setInterval(() => updateTimer(endTime), 1000);
+      }
+
+      function updateTimer(endTime) {
+        const remaining = Math.max(0, endTime - Date.now());
+        const minutes = Math.floor(remaining / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+        document.getElementById("timer").textContent =
+          `${minutes}:${seconds.toString().padStart(2, "0")}`;
+
+        if (remaining === 0) {
+          clearInterval(timerInterval);
+          showResults();
+        }
+      }
+
+      function updateLeaderboard(leaderboard) {
+        const div = document.getElementById("leaderboard");
+        div.innerHTML = leaderboard
+          .map(
+            (p) => `
+        <div class="leaderboard-item">
+          <span class="rank">#${p.rank}</span>
+          <span>${p.username}</span>
+          <span class="score">${p.score} pts</span>
+        </div>
+      `,
+          )
+          .join("");
+      }
+
+      async function showResults() {
+        document
+          .querySelectorAll(".section")
+          .forEach((s) => s.classList.remove("active"));
+        document.getElementById("results-section").classList.add("active");
+
+        const response = await fetch(
+          `${API_BASE}/session/${sessionId}/leaderboard`,
+        );
+        const data = await response.json();
+
+        const div = document.getElementById("final-results");
+        div.innerHTML = data.leaderboard
+          .map(
+            (p) => `
+        <div class="leaderboard-item">
+          <span class="rank">#${p.rank}</span>
+          <span>${p.username}</span>
+          <span class="score">${p.score} pts</span>
+        </div>
+      `,
+          )
+          .join("");
+      }
+
+      function copySessionId() {
+        const text = document.getElementById("session-id-display").textContent;
+        navigator.clipboard.writeText(text);
+        updateStatus("Session ID copied to clipboard!", "success");
+      }
+
+      async function leaveSession() {
+        await fetch(`${API_BASE}/session/leave`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId, userId }),
+        });
+        location.reload();
+      }
+
+      // Auto-connect if on game page
+      if (window.location.hash) {
+        const hash = window.location.hash.substring(1);
+        if (hash.startsWith("session=")) {
+          document.getElementById("join-session-id").value = hash.split("=")[1];
+          showTab("join");
+        }
+      }
+    </script>
+  </body>
+</html>
