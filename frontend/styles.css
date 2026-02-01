@@ -5,8 +5,8 @@
 }
 
 body {
-  width: 500px;
-  min-height: 650px;
+  width: 380px;
+  min-height: 500px;
   font-family: "Courier New", monospace;
   background: #2a2a2a;
   color: #e0e0e0;
@@ -17,8 +17,8 @@ body {
 .page {
   display: none;
   width: 100%;
-  min-height: 650px;
-  padding: 60px 50px;
+  min-height: 500px;
+  padding: 30px 25px;
   animation: fadeIn 0.3s;
   border: 3px solid #4a4a4a;
 }
