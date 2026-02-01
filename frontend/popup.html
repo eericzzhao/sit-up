@@ -39,10 +39,10 @@
         </div>
 
         <div class="duration-grid">
-            <button class="duration-btn" data-duration="300">15 MIN</button>
-            <button class="duration-btn" data-duration="600">30 MIN</button>
-            <button class="duration-btn" data-duration="900">45 MIN</button>
-            <button class="duration-btn" data-duration="1800">60 MIN</button>
+            <button class="duration-btn" data-duration="300">5 MIN</button>
+            <button class="duration-btn" data-duration="600">10 MIN</button>
+            <button class="duration-btn" data-duration="900">15 MIN</button>
+            <button class="duration-btn" data-duration="1800">30 MIN</button>
         </div>
 
         <button class="cancel-btn" id="cancelDurationBtn">[Cancel]</button>
@@ -52,45 +52,37 @@
     <div id="lobbyPage" class="page">
         <div class="lobby-content">
             <div class="session-info">
-                <p class="session-code-label">Session Code: <span id="lobbySessionCode">482913</span></p>
+                <p class="session-code-label">Session Code: <span id="lobbySessionCode">------</span></p>
                 <p class="share-links">
-                    <button class="link-btn" id="copyLinkBtn">[Copy Link]</button>
-                    <button class="link-btn" id="shareBtn">[Share]</button>
+                    <button class="link-btn" id="copyLinkBtn">[Copy Code]</button>
                 </p>
             </div>
 
             <div class="session-details">
-                <p>Duration: <span id="lobbyDuration">10 minutes</span></p>
+                <p>Duration: <span id="lobbyDuration">-- minutes</span></p>
             </div>
 
             <div class="players-section">
-                <p class="players-header">Players (<span id="playerCount">2</span>/4):</p>
-                <div class="players-list">
-                    <div class="player-item">
-                        <span class="player-icon">👤</span>
-                        <span class="player-name">Alice (Host)</span>
-                        <span class="player-ready">✓</span>
-                    </div>
-                    <div class="player-item">
-                        <span class="player-icon">👤</span>
-                        <span class="player-name">Bob</span>
-                        <span class="player-ready">✓</span>
-                    </div>
+                <p class="players-header">Players (<span id="playerCount">0</span>/4):</p>
+                <div class="players-list" id="playersList">
+                    <!-- Players will be added here dynamically -->
                 </div>
             </div>
 
-            <div class="waiting-message">
+            <div class="waiting-message" id="waitingMessage">
                 <p>Waiting for host to start...</p>
             </div>
 
             <div class="lobby-actions">
-                <button class="menu-btn" id="startSessionBtn">[Start Session]</button>
+                <button class="menu-btn" id="startSessionBtn" style="display: none;">[Start Session]</button>
                 <button class="link-btn" id="leaveLobbyBtn">[Leave]</button>
             </div>
         </div>
     </div>
 
+    <script src="socket.io.min.js"></script>
     <script src="popup.js"></script>
+
 </body>
 
 </html>

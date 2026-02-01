@@ -1,13 +1,15 @@
 {
     "manifest_version": 3,
-    "name": "Sit-Up",
+    "name": "SitUp - Posture Competition",
     "version": "1.0.0",
-    "description": "Gamified posture checking",
+    "description": "Compete with friends for the best posture",
     "permissions": [
-        "storage",
-        "notifications"
+        "storage"
     ],
     "action": {
         "default_popup": "popup.html"
+    },
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'self'"
     }
 }
