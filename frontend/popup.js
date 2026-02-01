@@ -442,17 +442,20 @@ async function startPostureTracking() {
       socket.emit("update_score", {
         sessionCode: currentSession.sessionId,
         score: latestScore,
-        greenZoneTime: Math.round(greenZoneTime + (greenZoneStart !== null ? (Date.now() - greenZoneStart) / 1000 : 0)),
+        greenZoneTime: Math.round(
+          greenZoneTime +
+            (greenZoneStart !== null
+              ? (Date.now() - greenZoneStart) / 1000
+              : 0)
+        ),
       });
     }
-  } catch (error) {
-    console.error("Failed to start tracking:", error);
-    trackingActive = false;
-    throw error;
-  }
+  }, 1000);
 }
 
+// ---------------------------------------------------------------------------
 // 2. STOP TRACKING
+// ---------------------------------------------------------------------------
 function stopPostureTracking() {
   epStop = true;
   if (trackingInterval) { clearInterval(trackingInterval); trackingInterval = null; }

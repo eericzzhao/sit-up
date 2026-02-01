@@ -30725,6 +30725,7 @@ var epStop = false;
 var latestScore = 50;
 var latestPostureLabel = null;
 var scoreEma = 70;
+var viewOrientation = "front";
 var pages = null;
 var trackingInterval = null;
 var scoreEmitInterval = null;
@@ -30772,11 +30773,13 @@ window.addEventListener("DOMContentLoaded", () => {
   pages = {
     mainMenu: document.getElementById("mainMenuPage"),
     duration: document.getElementById("durationPage"),
+    nameEntry: document.getElementById("nameEntryPage"),
     join: document.getElementById("joinPage"),
     lobby: document.getElementById("lobbyPage"),
     session: document.getElementById("sessionPage"),
     leaderboard: document.getElementById("leaderboardPage")
   };
+  resumePersistedSession();
 });
 function initSocket() {
   if (socket) return;
@@ -30791,6 +30794,7 @@ function initSocket() {
     console.log("Session created:", data);
     currentSession = data.sessionData;
     currentPlayer = data.player;
+    sessionTimeRemaining = data.sessionData.duration;
     document.getElementById("lobbySessionCode").textContent = data.sessionCode;
     updateLobbyUI(data.sessionData);
     showPage("lobby");
@@ -30799,6 +30803,7 @@ function initSocket() {
     console.log("Joined session:", data);
     currentSession = data.sessionData;
     currentPlayer = data.player;
+    sessionTimeRemaining = data.sessionData.duration;
     document.getElementById("lobbySessionCode").textContent = data.sessionCode;
     updateLobbyUI(data.sessionData);
     showPage("lobby");
@@ -30820,7 +30825,9 @@ function initSocket() {
   socket.on("session_started", (data) => {
     console.log("Session started:", data);
     currentSession = data.sessionData;
+    currentPlayer = data.player || currentPlayer;
     document.getElementById("activeSessionCode").textContent = currentSession.sessionId;
+    persistSessionState();
     showPage("session");
     startPostureTracking();
   });
@@ -30831,6 +30838,7 @@ function initSocket() {
   socket.on("session_finished", (data) => {
     console.log("Session finished:", data);
     stopPostureTracking();
+    clearSessionState();
     alert(
       `Session finished!
 Winner: ${data.winner.playerName} with ${data.winner.greenZoneTime}s in green zone`
@@ -30919,6 +30927,7 @@ document.getElementById("joinConfirmBtn").addEventListener("click", () => {
   }
   socket.emit("join_session", { sessionCode });
   document.getElementById("sessionCodeInput").value = "";
+  showPage("nameEntry");
 });
 document.getElementById("cancelJoinBtn").addEventListener("click", () => {
   document.getElementById("sessionCodeInput").value = "";
@@ -30977,6 +30986,45 @@ document.getElementById("rankStatBox").addEventListener("click", () => {
 document.getElementById("backToSessionBtn").addEventListener("click", () => {
   showPage("session");
 });
+function persistSessionState() {
+  if (!currentSession || !currentPlayer) return;
+  const state = {
+    sessionId: currentSession.sessionId,
+    duration: currentSession.duration,
+    playerName: currentPlayer.playerName,
+    playerId: currentPlayer.playerId,
+    isHost: currentPlayer.isHost,
+    sessionStartTime: Date.now()
+  };
+  localStorage.setItem("activeGameSession", JSON.stringify(state));
+  console.log("\u{1F4DD} Session persisted to localStorage", state);
+}
+function clearSessionState() {
+  localStorage.removeItem("activeGameSession");
+  console.log("\u{1F5D1}\uFE0F Session cleared from localStorage");
+}
+function getPersistedSession() {
+  try {
+    const data = localStorage.getItem("activeGameSession");
+    return data ? JSON.parse(data) : null;
+  } catch (e3) {
+    console.error("Failed to parse persisted session:", e3);
+    return null;
+  }
+}
+async function resumePersistedSession() {
+  const persisted = getPersistedSession();
+  if (!persisted) return;
+  console.log("\u{1F504} Attempting to resume session:", persisted);
+  initSocket();
+  await new Promise((r2) => setTimeout(r2, 500));
+  if (socket && socket.connected) {
+    socket.emit("rejoin_session", {
+      sessionCode: persisted.sessionId,
+      playerName: persisted.playerName
+    });
+  }
+}
 async function startPostureTracking() {
   console.log("\u{1F3AE} Posture tracking started");
   sessionTimeRemaining = currentSession?.duration ?? 900;
@@ -30987,6 +31035,7 @@ async function startPostureTracking() {
   lastPointTickAt = null;
   scoreEma = 70;
   latestScore = 50;
+  viewOrientation = "front";
   updateTimer();
   initializeSkeletonCanvas();
   resetFeedbackUI();
@@ -31008,7 +31057,9 @@ async function startPostureTracking() {
       socket.emit("update_score", {
         sessionCode: currentSession.sessionId,
         score: latestScore,
-        greenZoneTime: Math.round(greenZoneTime + (greenZoneStart !== null ? (Date.now() - greenZoneStart) / 1e3 : 0))
+        greenZoneTime: Math.round(
+          greenZoneTime + (greenZoneStart !== null ? (Date.now() - greenZoneStart) / 1e3 : 0)
+        )
       });
     }
   }, 1e3);
@@ -31196,6 +31247,75 @@ function normalizeLabel(label) {
   };
   return alias[s2] || alias[s2.replace(/_/g, "")] || label;
 }
+function detectViewOrientation(kpMap) {
+  const {
+    leftShoulder: ls,
+    rightShoulder: rs,
+    leftHip: lh,
+    rightHip: rh,
+    leftEye: le2,
+    rightEye: re3,
+    leftEar: ler,
+    rightEar: rer
+  } = kpMap;
+  const lsConf = ls?.confidence ?? 0;
+  const rsConf = rs?.confidence ?? 0;
+  const shoulderImbalance = Math.abs(lsConf - rsConf);
+  const eyeConf = {
+    left: Math.max(le2?.confidence ?? 0, ler?.confidence ?? 0),
+    right: Math.max(re3?.confidence ?? 0, rer?.confidence ?? 0)
+  };
+  const eyeImbalance = Math.abs(eyeConf.left - eyeConf.right);
+  if (shoulderImbalance > 0.35 || eyeImbalance > 0.4) {
+    return "side";
+  }
+  return "front";
+}
+function scoreFromSideView(kpMap, sourceWidth, sourceHeight) {
+  const {
+    nose,
+    leftShoulder: ls,
+    rightShoulder: rs,
+    leftHip: lh,
+    rightHip: rh,
+    leftKnee: lk,
+    rightKnee: rk,
+    leftAnkle: la,
+    rightAnkle: ra
+  } = kpMap;
+  const lsConf = ls?.confidence ?? 0;
+  const rsConf = rs?.confidence ?? 0;
+  const useLeft = lsConf > rsConf;
+  const shoulder = useLeft ? ls : rs;
+  const hip = useLeft ? lh : rh;
+  const knee = useLeft ? lk : rk;
+  const ankle = useLeft ? la : ra;
+  if (!shoulder || !hip && !nose) return null;
+  const torsoVec = hip ? { x: shoulder.x - hip.x, y: shoulder.y - hip.y } : null;
+  const torsoLen = torsoVec ? Math.hypot(torsoVec.x, torsoVec.y) || 1 : sourceHeight || 480;
+  let penalty = 0;
+  if (torsoVec) {
+    const spineAngleDeg = Math.abs(Math.atan2(torsoVec.x, -torsoVec.y) * (180 / Math.PI));
+    penalty += spineAngleDeg * 3.5;
+  }
+  if (nose && shoulder) {
+    const headToShoulderX = Math.abs(nose.x - shoulder.x) / torsoLen;
+    const headToShoulderY = (shoulder.y - nose.y) / torsoLen;
+    penalty += Math.max(0, headToShoulderX - 0.1) * 400;
+    penalty += Math.max(0, 0.3 - headToShoulderY) * 250;
+  }
+  if (knee && hip) {
+    const kneeLateral = Math.abs(knee.x - hip.x) / torsoLen;
+    penalty += kneeLateral * 80;
+  }
+  if (ankle && knee) {
+    const footLateral = Math.abs(ankle.x - knee.x) / torsoLen;
+    penalty += Math.max(0, footLateral) * 100;
+  }
+  const raw = Math.max(0, Math.min(100, Math.round(100 - penalty)));
+  scoreEma = 0.75 * scoreEma + 0.25 * raw;
+  return Math.round(scoreEma);
+}
 function scoreFromKeypoints(kpMap, sourceWidth, sourceHeight) {
   const {
     nose,
@@ -31208,6 +31328,11 @@ function scoreFromKeypoints(kpMap, sourceWidth, sourceHeight) {
     leftAnkle: la,
     rightAnkle: ra
   } = kpMap;
+  viewOrientation = detectViewOrientation(kpMap);
+  if (viewOrientation === "side") {
+    const sideScore = scoreFromSideView(kpMap, sourceWidth, sourceHeight);
+    if (sideScore !== null) return sideScore;
+  }
   const isStanding = !!(lk || rk || la || ra);
   if (nose && ls && rs && lh && rh) {
     const midShoulder = { x: (ls.x + rs.x) / 2, y: (ls.y + rs.y) / 2 };
