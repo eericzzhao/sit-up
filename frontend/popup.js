@@ -39,6 +39,9 @@ function initSocket() {
     currentSession = data.sessionData;
     currentPlayer = data.player;
 
+    // Set timer to match session duration
+    sessionTimeRemaining = data.sessionData.duration;
+
     document.getElementById("lobbySessionCode").textContent = data.sessionCode;
     updateLobbyUI(data.sessionData);
     showPage("lobby");
@@ -48,6 +51,9 @@ function initSocket() {
     console.log("Joined session:", data);
     currentSession = data.sessionData;
     currentPlayer = data.player;
+
+    // Set timer to match session duration
+    sessionTimeRemaining = data.sessionData.duration;
 
     document.getElementById("lobbySessionCode").textContent = data.sessionCode;
     updateLobbyUI(data.sessionData);
@@ -74,10 +80,11 @@ function initSocket() {
   socket.on("session_started", (data) => {
     console.log("Session started:", data);
     currentSession = data.sessionData;
-    
+
     // Copy session code to active session page
-    document.getElementById("activeSessionCode").textContent = currentSession.sessionId;
-    
+    document.getElementById("activeSessionCode").textContent =
+      currentSession.sessionId;
+
     // Navigate to active session page
     showPage("session");
     startPostureTracking();
@@ -148,7 +155,10 @@ document.querySelectorAll(".duration-btn").forEach((btn) => {
     selectedDuration = parseInt(btn.dataset.duration);
     const minutes = selectedDuration / 60;
     document.getElementById("lobbyDuration").textContent = `${minutes} minutes`;
-    
+
+    // Set the timer to match selected duration
+    sessionTimeRemaining = selectedDuration;
+
     // Go to name entry page instead of creating session immediately
     showPage("nameEntry");
   });
@@ -158,7 +168,7 @@ document.getElementById("cancelDurationBtn").addEventListener("click", () => {
   showPage("mainMenu");
 });
 
-// Name Entry Page 
+// Name Entry Page
 document.getElementById("nameConfirmBtn").addEventListener("click", () => {
   const name = document.getElementById("playerNameInput").value.trim();
 
@@ -173,17 +183,34 @@ document.getElementById("nameConfirmBtn").addEventListener("click", () => {
   }
 
   playerName = name;
-  
+  console.log("Player name set to:", playerName);
+
   // If we came from duration selection (creating session)
   if (selectedDuration) {
-    console.log("Creating session with name:", playerName, "duration:", selectedDuration);
-    socket.emit("create_session", { duration: selectedDuration, playerName: playerName });
+    console.log(
+      "Creating session with name:",
+      playerName,
+      "duration:",
+      selectedDuration,
+    );
+    socket.emit("create_session", {
+      duration: selectedDuration,
+      playerName: playerName,
+    });
     selectedDuration = null; // Reset
-  } 
+  }
   // If we came from join session
   else if (sessionCodeToJoin) {
-    console.log("Joining session:", sessionCodeToJoin, "with name:", playerName);
-    socket.emit("join_session", { sessionCode: sessionCodeToJoin, playerName: playerName });
+    console.log(
+      "Joining session:",
+      sessionCodeToJoin,
+      "with name:",
+      playerName,
+    );
+    socket.emit("join_session", {
+      sessionCode: sessionCodeToJoin,
+      playerName: playerName,
+    });
     sessionCodeToJoin = null; // Reset
   }
 
@@ -213,10 +240,10 @@ document.getElementById("joinConfirmBtn").addEventListener("click", () => {
   }
 
   sessionCodeToJoin = sessionCode;
-  
+
   // Clear input
   document.getElementById("sessionCodeInput").value = "";
-  
+
   // Go to name entry page
   showPage("nameEntry");
 });
@@ -305,6 +332,9 @@ async function startPostureTracking() {
   trackingActive = true;
 
   try {
+    // Update timer display immediately with correct time before starting countdown
+    updateTimerDisplay();
+
     // A. Setup Canvas & Camera for the User UI
     initializeSkeletonCanvas();
     await initializeCameraFeed(); // Wait for camera
@@ -539,7 +569,7 @@ function initializeSkeletonCanvas() {
 }
 
 function startTimerCountdown() {
-  updateTimerDisplay();
+  // Don't call updateTimerDisplay here since it's already called before this
   timerInterval = setInterval(() => {
     sessionTimeRemaining--;
     updateTimerDisplay();
