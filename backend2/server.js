@@ -17,48 +17,17 @@ const io = new Server(httpServer, {
 // ---------------------------------------------------------------------------
 // EyePop session endpoint
 // ---------------------------------------------------------------------------
-// EyePop.workerEndpoint() reads EYEPOP_API_KEY (or EYEPOP_SECRET_KEY via the
-// apiKey option) and EYEPOP_POP_ID from process.env.  dotenv above makes sure
+// EyePop.workerEndpoint() with no arguments reads EYEPOP_SECRET_KEY and
+// EYEPOP_POP_ID from process.env automatically.  dotenv above makes sure
 // those are populated from your .env file.
-//
-// We keep a single warm endpoint so every /eyepop/session request doesn't
-// cold-start a new pipeline.  The client only needs the session token; it
-// will connect its own WorkerEndpoint with that token and changePop itself.
-// ---------------------------------------------------------------------------
-let _epEndpoint = null;
-
-async function getEyePopEndpoint() {
-  if (_epEndpoint) return _epEndpoint;
-
-  // Support both EYEPOP_API_KEY (SDK default) and EYEPOP_SECRET_KEY
-  const apiKey = process.env.EYEPOP_API_KEY || process.env.EYEPOP_SECRET_KEY;
-  if (!apiKey) throw new Error("Set EYEPOP_API_KEY (or EYEPOP_SECRET_KEY) in your .env");
-
-  _epEndpoint = await EyePop.workerEndpoint({
-    auth: { apiKey },
-    popId: process.env.EYEPOP_POP_ID || "transient",
-  }).connect();
-
-  return _epEndpoint;
-}
-
 app.get("/eyepop/session", async (req, res) => {
   try {
-    const endpoint = await getEyePopEndpoint();
+    const endpoint = await EyePop.workerEndpoint().connect();
     const session  = await endpoint.session();
-
-    // The SDK session() returns { eyepopUrl, accessToken, validUntil }.
-    // The browser client also needs popId so it knows which pop to target.
-    res.json({
-      eyepopUrl:   session.eyepopUrl,
-      accessToken: session.accessToken,
-      validUntil:  session.validUntil,
-      popId:       endpoint.popId() || process.env.EYEPOP_POP_ID || "transient",
-    });
+    await endpoint.disconnect();
+    res.json(session);
   } catch (err) {
     console.error("eyepop/session error:", err);
-    // If the cached endpoint died, clear it so next request retries
-    _epEndpoint = null;
     res.status(500).json({ error: String(err?.message || err) });
   }
 });
