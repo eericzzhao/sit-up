@@ -247,193 +247,269 @@ document.getElementById("backToSessionBtn").addEventListener("click", () => {
   showPage("session");
 });
 
-// Posture Tracking Functions
-let trackingInterval = null;
-let sessionTimeRemaining = 900; // 15 minutes in seconds
+// --- Posture Tracking Functions (Integrated with EyePop.ai) ---
+let sessionStartTime = null;
+let sessionTimeRemaining = 900; // Default 15 mins
 let skeletonCanvas = null;
 let skeletonCtx = null;
+let trackingActive = false;
+let timerInterval = null;
 
-function startPostureTracking() {
-  console.log("🎮 Posture tracking started");
+// 1. START TRACKING
+async function startPostureTracking() {
+  console.log("🎮 Real Posture tracking starting...");
+  trackingActive = true;
 
-  // Initialize skeleton canvas
-  initializeSkeletonCanvas();
+  try {
+    // A. Setup Canvas & Camera for the User UI
+    initializeSkeletonCanvas();
+    await initializeCameraFeed(); // Wait for camera
 
-  // Start camera (placeholder - will be replaced with actual camera access)
-  initializeCameraFeed();
+    // B. Start the Timer
+    sessionStartTime = Date.now();
+    startTimerCountdown();
 
-  // Start timer countdown
-  trackingInterval = setInterval(() => {
-    sessionTimeRemaining--;
-    updateTimer();
-
-    // Simulate posture updates (replace with real EyePop.ai integration)
-    updatePostureScore();
-    drawSkeletonModel();
-
-    if (sessionTimeRemaining <= 0) {
-      endSession();
+    // C. Connect to the "Brain" (Offscreen Document)
+    // We send a message to the background script, which ensures offscreen is running
+    // and tells it to start processing.
+    if (chrome.runtime && chrome.runtime.sendMessage) {
+      chrome.runtime.sendMessage({ action: "START_TRACKING" });
+    } else {
+      console.warn("Chrome runtime not available - running in standalone mode");
     }
-  }, 1000);
+
+    // D. Listen for updates from EyePop
+    if (chrome.runtime && chrome.runtime.onMessage) {
+      chrome.runtime.onMessage.addListener(handleEyePopMessage);
+    }
+  } catch (error) {
+    console.error("Failed to start tracking:", error);
+    trackingActive = false;
+    throw error;
+  }
 }
 
+// 2. STOP TRACKING
 function stopPostureTracking() {
-  if (trackingInterval) {
-    clearInterval(trackingInterval);
-    trackingInterval = null;
-  }
+  trackingActive = false;
+  console.log("🛑 Posture tracking stopped");
 
-  // Stop camera feed
+  // Stop Timer
+  if (timerInterval) clearInterval(timerInterval);
+
+  // Stop Camera Preview
   const video = document.getElementById("cameraFeed");
   if (video.srcObject) {
     video.srcObject.getTracks().forEach((track) => track.stop());
   }
 
-  console.log("🛑 Posture tracking stopped");
+  // Remove Listener
+  chrome.runtime.onMessage.removeListener(handleEyePopMessage);
+
+  // Tell Offscreen to stop processing (saves CPU)
+  chrome.runtime.sendMessage({ action: "STOP_TRACKING" });
 }
 
-function initializeCameraFeed() {
+// 3. HANDLE MESSAGES FROM EYEPOP (The "Brain")
+function handleEyePopMessage(message) {
+  if (!trackingActive) return;
+
+  if (message.type === "POSTURE_UPDATE") {
+    // 1. Update Score UI
+    updateScoreUI(message.score, message.status);
+
+    // 2. Draw Skeleton
+    if (message.keypoints) {
+      drawSkeletonModel(message.keypoints);
+    }
+  }
+}
+
+function updateScoreUI(score, statusText) {
+  const scoreBadge = document.getElementById("scoreBadge");
+  const container = document.getElementById("cameraContainer");
+  const statusEl = document.getElementById("postureStatus");
+
+  scoreBadge.textContent = Math.round(score);
+
+  // Remove old classes
+  container.classList.remove("warning", "danger");
+  statusEl.classList.remove("warning", "danger");
+
+  // Apply visual feedback
+  if (score >= 70) {
+    statusEl.querySelector(".status-text").textContent = "Good Posture";
+    statusEl.querySelector(".status-icon").textContent = "✓";
+    scoreBadge.style.backgroundColor = "#4ade80"; // Green
+  } else if (score >= 40) {
+    container.classList.add("warning");
+    statusEl.classList.add("warning");
+    statusEl.querySelector(".status-text").textContent = "Need Adjustment";
+    statusEl.querySelector(".status-icon").textContent = "⚠";
+    scoreBadge.style.backgroundColor = "#facc15"; // Yellow
+  } else {
+    container.classList.add("danger");
+    statusEl.classList.add("danger");
+    statusEl.querySelector(".status-text").textContent = "Poor Posture";
+    statusEl.querySelector(".status-icon").textContent = "✗";
+    scoreBadge.style.backgroundColor = "#f87171"; // Red
+  }
+}
+
+// 4. DRAW SKELETON (Using Real EyePop Keypoints)
+function drawSkeletonModel(keypoints) {
+  if (!skeletonCtx || !skeletonCanvas) return;
+
+  // Clear canvas
+  skeletonCtx.clearRect(0, 0, skeletonCanvas.width, skeletonCanvas.height);
+
+  // Helper to find a point by label
+  const getPoint = (label) => keypoints.find((k) => k.label === label);
+
+  // Map of EyePop labels to our drawing logic
+  // EyePop 'Person 2D' typically returns: 'nose', 'left shoulder', 'right shoulder', etc.
+  const points = {
+    nose: getPoint("nose"),
+    lShoulder: getPoint("left shoulder"),
+    rShoulder: getPoint("right shoulder"),
+    lElbow: getPoint("left elbow"),
+    rElbow: getPoint("right elbow"),
+    lWrist: getPoint("left wrist"),
+    rWrist: getPoint("right wrist"),
+    lEye: getPoint("left eye"),
+    rEye: getPoint("right eye"),
+    lEar: getPoint("left ear"),
+    rEar: getPoint("right ear"),
+  };
+
+  const video = document.getElementById("cameraFeed");
+  if (!video.videoWidth) return; // Video not ready
+
+  // Scaling Factor: EyePop coordinates might be relative (0-1) or absolute.
+  // Assuming EyePop returns absolute coordinates based on source video.
+  // We need to scale them to match the CURRENT canvas display size.
+  const scaleX = skeletonCanvas.width / video.videoWidth;
+  const scaleY = skeletonCanvas.height / video.videoHeight;
+
+  skeletonCtx.lineWidth = 3;
+  skeletonCtx.strokeStyle = "#4ade80"; // Green skeleton
+  skeletonCtx.fillStyle = "#ffffff";
+
+  // Function to draw a line between two points
+  const drawLine = (p1, p2) => {
+    if (p1 && p2) {
+      skeletonCtx.beginPath();
+      skeletonCtx.moveTo(p1.x * scaleX, p1.y * scaleY);
+      skeletonCtx.lineTo(p2.x * scaleX, p2.y * scaleY);
+      skeletonCtx.stroke();
+    }
+  };
+
+  // Draw Connections
+  drawLine(points.nose, points.lShoulder);
+  drawLine(points.nose, points.rShoulder);
+  drawLine(points.lShoulder, points.rShoulder); // Clavicle
+  drawLine(points.lShoulder, points.lElbow);
+  drawLine(points.lElbow, points.lWrist);
+  drawLine(points.rShoulder, points.rElbow);
+  drawLine(points.rElbow, points.rWrist);
+  drawLine(points.lEar, points.lShoulder); // Neck lines
+  drawLine(points.rEar, points.rShoulder);
+
+  // Draw Dots
+  Object.values(points).forEach((p) => {
+    if (p) {
+      skeletonCtx.beginPath();
+      skeletonCtx.arc(p.x * scaleX, p.y * scaleY, 5, 0, 2 * Math.PI);
+      skeletonCtx.fill();
+    }
+  });
+}
+
+// --- Helper Functions ---
+
+async function initializeCameraFeed() {
+  console.log("📷 Requesting camera access...");
   const video = document.getElementById("cameraFeed");
 
-  // Request camera access (placeholder)
-  navigator.mediaDevices
-    .getUserMedia({ video: true })
-    .then((stream) => {
-      video.srcObject = stream;
-    })
-    .catch((err) => {
-      console.log("Camera access denied or unavailable:", err);
-      // Show placeholder instead
+  if (!video) {
+    console.error("Video element not found!");
+    return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        width: { ideal: 640 },
+        height: { ideal: 480 },
+        facingMode: "user",
+      },
     });
+
+    console.log("✅ Camera access granted!");
+    video.srcObject = stream;
+
+    // Wait for video metadata to load so we know dimensions
+    return new Promise((resolve, reject) => {
+      video.onloadedmetadata = () => {
+        console.log("📹 Video metadata loaded, playing...");
+        video
+          .play()
+          .then(() => {
+            console.log("✅ Video is playing");
+            resolve();
+          })
+          .catch((err) => {
+            console.error("Video play error:", err);
+            reject(err);
+          });
+      };
+
+      video.onerror = (err) => {
+        console.error("Video element error:", err);
+        reject(err);
+      };
+    });
+  } catch (err) {
+    console.error("❌ Camera access denied:", err);
+    alert(
+      "Camera access is required to track your posture. Please allow camera access and try again.",
+    );
+    throw err;
+  }
 }
 
 function initializeSkeletonCanvas() {
   skeletonCanvas = document.getElementById("skeletonCanvas");
   skeletonCtx = skeletonCanvas.getContext("2d");
 
-  // Set canvas size to match container
+  // Important: Set internal canvas resolution to match display size
   const container = document.getElementById("cameraContainer");
-  skeletonCanvas.width = container.offsetWidth;
-  skeletonCanvas.height = container.offsetHeight;
+
+  // Use a ResizeObserver to handle window resizing
+  const resizeObserver = new ResizeObserver(() => {
+    skeletonCanvas.width = container.offsetWidth;
+    skeletonCanvas.height = container.offsetHeight;
+  });
+  resizeObserver.observe(container);
 }
 
-function drawSkeletonModel() {
-  if (!skeletonCtx) return;
-
-  // Clear canvas
-  skeletonCtx.clearRect(0, 0, skeletonCanvas.width, skeletonCanvas.height);
-
-  // Simulate skeleton keypoints (replace with real EyePop.ai data)
-  const centerX = skeletonCanvas.width / 2;
-  const centerY = skeletonCanvas.height / 2;
-
-  // Add slight movement for demo
-  const time = Date.now() / 1000;
-  const sway = Math.sin(time) * 5;
-
-  // Define skeleton keypoints
-  const skeleton = {
-    nose: { x: centerX + sway, y: centerY - 80 },
-    neck: { x: centerX + sway, y: centerY - 60 },
-    leftShoulder: { x: centerX - 40 + sway, y: centerY - 55 },
-    rightShoulder: { x: centerX + 40 + sway, y: centerY - 55 },
-    leftElbow: { x: centerX - 50 + sway, y: centerY - 20 },
-    rightElbow: { x: centerX + 50 + sway, y: centerY - 20 },
-    leftWrist: { x: centerX - 55 + sway, y: centerY + 10 },
-    rightWrist: { x: centerX + 55 + sway, y: centerY + 10 },
-    leftHip: { x: centerX - 25, y: centerY + 20 },
-    rightHip: { x: centerX + 25, y: centerY + 20 },
-    leftKnee: { x: centerX - 30, y: centerY + 60 },
-    rightKnee: { x: centerX + 30, y: centerY + 60 },
-    leftAnkle: { x: centerX - 25, y: centerY + 95 },
-    rightAnkle: { x: centerX + 25, y: centerY + 95 },
-  };
-
-  // Draw skeleton connections
-  const connections = [
-    ["nose", "neck"],
-    ["neck", "leftShoulder"],
-    ["neck", "rightShoulder"],
-    ["leftShoulder", "leftElbow"],
-    ["rightShoulder", "rightElbow"],
-    ["leftElbow", "leftWrist"],
-    ["rightElbow", "rightWrist"],
-    ["neck", "leftHip"],
-    ["neck", "rightHip"],
-    ["leftHip", "leftKnee"],
-    ["rightHip", "rightKnee"],
-    ["leftKnee", "leftAnkle"],
-    ["rightKnee", "rightAnkle"],
-    ["leftHip", "rightHip"],
-  ];
-
-  // Get current score for color
-  const score = parseInt(document.getElementById("scoreBadge").textContent);
-  let color = "#4caf50"; // green
-  if (score < 70 && score >= 40) color = "#ffc107"; // yellow
-  if (score < 40) color = "#f44336"; // red
-
-  // Draw connections
-  skeletonCtx.strokeStyle = color;
-  skeletonCtx.lineWidth = 3;
-  skeletonCtx.shadowBlur = 10;
-  skeletonCtx.shadowColor = color;
-
-  connections.forEach(([start, end]) => {
-    skeletonCtx.beginPath();
-    skeletonCtx.moveTo(skeleton[start].x, skeleton[start].y);
-    skeletonCtx.lineTo(skeleton[end].x, skeleton[end].y);
-    skeletonCtx.stroke();
-  });
-
-  // Draw keypoints
-  skeletonCtx.fillStyle = color;
-  skeletonCtx.shadowBlur = 15;
-  Object.values(skeleton).forEach((point) => {
-    skeletonCtx.beginPath();
-    skeletonCtx.arc(point.x, point.y, 5, 0, Math.PI * 2);
-    skeletonCtx.fill();
-  });
+function startTimerCountdown() {
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    sessionTimeRemaining--;
+    updateTimerDisplay();
+    if (sessionTimeRemaining <= 0) {
+      endSession();
+    }
+  }, 1000);
 }
 
-function updateTimer() {
-  const minutes = Math.floor(sessionTimeRemaining / 60);
-  const seconds = sessionTimeRemaining % 60;
+function updateTimerDisplay() {
+  const m = Math.floor(sessionTimeRemaining / 60);
+  const s = sessionTimeRemaining % 60;
   document.getElementById("timeRemaining").textContent =
-    `${minutes}:${seconds.toString().padStart(2, "0")}`;
-}
-
-function updatePostureScore() {
-  // Simulate score fluctuation (replace with real EyePop.ai data)
-  const currentScore = parseInt(
-    document.getElementById("scoreBadge").textContent,
-  );
-  const change = Math.floor(Math.random() * 5) - 2; // -2 to +2
-  const newScore = Math.max(0, Math.min(100, currentScore + change));
-
-  document.getElementById("scoreBadge").textContent = newScore;
-
-  // Update container color based on score
-  const container = document.getElementById("cameraContainer");
-  const status = document.getElementById("postureStatus");
-
-  container.classList.remove("warning", "danger");
-  status.classList.remove("warning", "danger");
-
-  if (newScore >= 70) {
-    status.querySelector(".status-text").textContent = "Good Posture";
-    status.querySelector(".status-icon").textContent = "✓";
-  } else if (newScore >= 40) {
-    container.classList.add("warning");
-    status.classList.add("warning");
-    status.querySelector(".status-text").textContent = "Need Adjustment";
-    status.querySelector(".status-icon").textContent = "⚠";
-  } else {
-    container.classList.add("danger");
-    status.classList.add("danger");
-    status.querySelector(".status-text").textContent = "Poor Posture";
-    status.querySelector(".status-icon").textContent = "✗";
-  }
+    `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 function endSession() {

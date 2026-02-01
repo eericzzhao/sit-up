@@ -1,15 +1,14 @@
 {
-    "manifest_version": 3,
-    "name": "SitUp - Posture Competition",
-    "version": "1.0.0",
-    "description": "Compete with friends for the best posture",
-    "permissions": [
-        "storage"
-    ],
-    "action": {
-        "default_popup": "popup.html"
-    },
-    "content_security_policy": {
-        "extension_pages": "script-src 'self'; object-src 'self'"
-    }
+  "manifest_version": 3,
+  "name": "SitUp - Posture Competition",
+  "version": "1.0.0",
+  "description": "Compete with friends for the best posture",
+  "permissions": ["storage"],
+  "host_permissions": ["http://localhost:3000/*"],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
 }
