@@ -10,9 +10,20 @@ class Session {
         this.playerCounter = 0;
     }
 
+<<<<<<< HEAD
     addPlayer(socketId, playerName = null) {
+=======
+    addPlayer(socketId, customPlayerName = null) {
+>>>>>>> dadca22 (rough version of the code up)
         if (this.players.size >= 4) {
             return { success: false, error: 'Session is full (max 4 players)' };
+        }
+
+        // Allow rejoining active session for disconnected players
+        if (this.status === 'active' && this.players.has(socketId)) {
+            // Player reconnecting - update their socket but keep their data
+            const existingPlayer = this.players.get(socketId);
+            return { success: true, player: existingPlayer };
         }
 
         if (this.status !== 'waiting') {
@@ -20,15 +31,24 @@ class Session {
         }
 
         this.playerCounter++;
+<<<<<<< HEAD
         
         // Use provided name or fallback to default names
         const defaultNames = ['Alice', 'Bob', 'Charlie', 'Diana'];
         const finalName = playerName || defaultNames[this.playerCounter - 1] || `Player ${this.playerCounter}`;
+=======
+        const names = ['Alice', 'Bob', 'Charlie', 'Diana'];
+        const playerName = customPlayerName || names[this.playerCounter - 1];
+>>>>>>> dadca22 (rough version of the code up)
 
         const player = {
             socketId,
             playerId: `player_${this.playerCounter}`,
+<<<<<<< HEAD
             playerName: finalName,
+=======
+            playerName: playerName,
+>>>>>>> dadca22 (rough version of the code up)
             isHost: socketId === this.creatorSocketId,
             isReady: true,
             score: 0,

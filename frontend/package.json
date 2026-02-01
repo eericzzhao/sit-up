@@ -1,0 +1,24 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "popup.js",
+  "scripts": {
+    "build": "esbuild popup.js --bundle --format=esm --platform=browser --target=chrome120 --outfile=popup.bundle.js --alias:path=path-browserify",
+    "watch": "esbuild popup.js --bundle --format=esm --platform=browser --target=chrome120 --outfile=popup.bundle.js --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "esbuild": "^0.27.2"
+  },
+  "dependencies": {
+    "@eyepop.ai/eyepop": "^3.10.0",
+    "@eyepop.ai/eyepop-render-2d": "^3.10.0",
+    "@eyepop.ai/javascript-sdk": "^0.1.10",
+    "path-browserify": "^1.0.1",
+    "socket.io-client": "^4.8.3"
+  }
+}

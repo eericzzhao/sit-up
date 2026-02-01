@@ -1,6 +1,11 @@
 {
+<<<<<<< HEAD
   "dependencies": {
     "@crxjs/vite-plugin": "^2.0.0-beta.33",
     "@eyepop.ai/eyepop": "^3.10.0"
+=======
+  "devDependencies": {
+    "esbuild": "^0.27.2"
+>>>>>>> dadca22 (rough version of the code up)
   }
 }

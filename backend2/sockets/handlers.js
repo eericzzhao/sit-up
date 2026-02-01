@@ -59,6 +59,45 @@ function setupSocketHandlers(io) {
             });
         });
 
+        socket.on('rejoin_session', (data) => {
+            const { sessionCode, playerName } = data;
+            const session = sessions.get(sessionCode);
+
+            if (!session) {
+                socket.emit('error', { message: 'Session not found' });
+                return;
+            }
+
+            // Check if player can rejoin (session must be active)
+            if (session.status !== 'active') {
+                socket.emit('error', { message: 'Session is not active. Cannot rejoin.' });
+                return;
+            }
+
+            // Add player back with the same socket ID but can use playerName
+            const result = session.addPlayer(socket.id, playerName);
+
+            if (!result.success) {
+                socket.emit('error', { message: result.error });
+                return;
+            }
+
+            socket.join(sessionCode);
+
+            socket.emit('session_joined', {
+                sessionCode,
+                player: result.player,
+                sessionData: session.getSessionData()
+            });
+
+            socket.to(sessionCode).emit('player_joined', {
+                player: result.player,
+                sessionData: session.getSessionData()
+            });
+
+            console.log(`✅ Player rejoined session ${sessionCode}`);
+        });
+
         socket.on('start_session', (data) => {
             const { sessionCode } = data;
             const session = sessions.get(sessionCode);

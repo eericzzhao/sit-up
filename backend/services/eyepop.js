@@ -1,96 +1,33 @@
-const EyePop = require("@eyepop.ai/eyepop");
+import { PopComponentType, ForwardOperatorType } from '@eyepop.ai/eyepop'
 
-class EyePopService {
-  constructor() {
-    this.endpoint = null;
-    this.isInitialized = false;
-  }
-
-  async initialize() {
-    if (this.isInitialized) return;
-
-    const popId = process.env.EYEPOP_POP_ID;
-    const secretKey = process.env.EYEPOP_SECRET_KEY;
-
-    if (!popId || !secretKey) {
-      throw new Error(
-        "EYEPOP_POP_ID and EYEPOP_SECRET_KEY must be set in environment variables",
-      );
-    }
-
-    try {
-      this.endpoint = await EyePop.endpoint({
-        popId: popId,
-        auth: { secretKey: secretKey },
-      }).connect();
-
-      this.isInitialized = true;
-      console.log("✅ EyePop.ai connected successfully");
-    } catch (error) {
-      console.error("❌ Failed to connect to EyePop.ai:", error);
-      throw error;
-    }
-  }
-
-  async analyzePose(imageBuffer) {
-    if (!this.isInitialized) {
-      await this.initialize();
-    }
-
-    try {
-      // Upload image and get results
-      const results = await this.endpoint.upload(imageBuffer);
-
-      // Extract pose keypoints from results
-      const poses = [];
-
-      for await (const result of results) {
-        if (result.objects) {
-          for (const obj of result.objects) {
-            // Look for person detections with keypoints
-            if (obj.classLabel === "person" && obj.keyPoints) {
-              poses.push({
-                keypoints: obj.keyPoints,
-                confidence: obj.confidence,
-                boundingBox: {
-                  x: obj.x,
-                  y: obj.y,
-                  width: obj.width,
-                  height: obj.height,
-                },
-              });
-            }
-          }
+export const PersonPostureAnalysis = {
+  components: [{
+    type: PopComponentType.INFERENCE,
+    ability: 'eyepop.person:latest',
+    categoryName: 'person',
+    confidenceThreshold: 0.9,
+    forward: {
+      operator: { type: ForwardOperatorType.CROP },
+      targets: [{
+        type: PopComponentType.INFERENCE,
+        ability: 'eyepop.image-contents:latest',
+        params: {
+          prompts: [{
+            prompt:
+              'Analyze the person\'s posture in this image and determine the categories of: ' +
+              [
+                'Head position (Neutral, Forward-leaning, Tilted left, Tilted right)',
+                'Shoulder alignment (Level, Left higher, Right higher, Rounded/slouched)',
+                'Back position (Straight, Slightly curved, Hunched, Slouched)',
+                'Neck angle (Neutral, Forward, Strained)',
+                'Overall posture score (Good, Fair, Poor)',
+                'Describe any posture issues observed'
+              ].join(', ') +
+              '. Report the values of the categories as classLabels. ' +
+              'If you are unable to provide a category with a value then set its classLabel to null'
+          }]
         }
-      }
-
-      return poses;
-    } catch (error) {
-      console.error("Error analyzing pose:", error);
-      throw new Error("Failed to analyze pose with EyePop.ai");
+      }]
     }
-  }
-
-  async disconnect() {
-    if (this.endpoint) {
-      await this.endpoint.disconnect();
-      this.isInitialized = false;
-      console.log("EyePop.ai disconnected");
-    }
-  }
+  }]
 }
-
-// Singleton instance
-const eyePopService = new EyePopService();
-
-// Graceful shutdown
-process.on("SIGTERM", async () => {
-  await eyePopService.disconnect();
-});
-
-process.on("SIGINT", async () => {
-  await eyePopService.disconnect();
-  process.exit(0);
-});
-
-module.exports = eyePopService;
