@@ -1,88 +1,254 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sit-Up</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
 
-<body>
+  <body>
     <!-- Main Menu Page -->
     <div id="mainMenuPage" class="page active">
-        <div class="main-header">
-            <h1>Sit Up!</h1>
-            <p class="subtitle">Compete for Perfect Posture</p>
-        </div>
+      <div class="main-header">
+        <h1>Sit Up!</h1>
+        <p class="subtitle">Compete for Perfect Posture</p>
+      </div>
 
-        <div class="main-menu">
-            <button class="menu-btn" id="createSessionBtn">Create Session</button>
-            <button class="menu-btn" id="joinSessionBtn">Join Session</button>
-        </div>
+      <div class="main-menu">
+        <button class="menu-btn" id="createSessionBtn">Create Session</button>
+        <button class="menu-btn" id="joinSessionBtn">Join Session</button>
+      </div>
 
-        <div class="how-to-play">
-            <h3>How to Play:</h3>
-            <ol>
-                <li>Create or join session</li>
-                <li>Maintain good posture</li>
-                <li>Stay in green zone longest</li>
-                <li>Win!</li>
-            </ol>
-        </div>
+      <div class="how-to-play">
+        <h3>How to Play:</h3>
+        <ol>
+          <li>Create or join session</li>
+          <li>Maintain good posture</li>
+          <li>Stay in green zone longest</li>
+          <li>Win!</li>
+        </ol>
+      </div>
     </div>
 
     <!-- Duration Selection Page -->
     <div id="durationPage" class="page">
-        <div class="duration-header">
-            <h1>Select Session Duration</h1>
+      <div class="duration-header">
+        <h1>Select Session Duration</h1>
+      </div>
+
+      <div class="duration-grid">
+        <button class="duration-btn" data-duration="300">5 MIN</button>
+        <button class="duration-btn" data-duration="600">10 MIN</button>
+        <button class="duration-btn" data-duration="900">15 MIN</button>
+        <button class="duration-btn" data-duration="1800">30 MIN</button>
+      </div>
+
+      <button class="cancel-btn" id="cancelDurationBtn">[Cancel]</button>
+    </div>
+
+    <!-- Join Session Page -->
+    <div id="joinPage" class="page">
+      <div class="join-content">
+        <div class="join-header">
+          <h1>Join Session</h1>
+          <p class="join-subtitle">Enter the session code</p>
         </div>
 
-        <div class="duration-grid">
-            <button class="duration-btn" data-duration="300">5 MIN</button>
-            <button class="duration-btn" data-duration="600">10 MIN</button>
-            <button class="duration-btn" data-duration="900">15 MIN</button>
-            <button class="duration-btn" data-duration="1800">30 MIN</button>
+        <div class="join-form">
+          <input
+            type="text"
+            id="sessionCodeInput"
+            class="session-code-input"
+            placeholder="000000"
+            maxlength="6"
+            autocomplete="off"
+          />
+          <p class="input-hint">6-digit code from host</p>
         </div>
 
-        <button class="cancel-btn" id="cancelDurationBtn">[Cancel]</button>
+        <div class="join-actions">
+          <button class="menu-btn" id="joinConfirmBtn">Join Session</button>
+          <button class="cancel-btn" id="cancelJoinBtn">[Cancel]</button>
+        </div>
+      </div>
     </div>
 
     <!-- Lobby/Waiting Page -->
     <div id="lobbyPage" class="page">
-        <div class="lobby-content">
-            <div class="session-info">
-                <p class="session-code-label">Session Code: <span id="lobbySessionCode">------</span></p>
-                <p class="share-links">
-                    <button class="link-btn" id="copyLinkBtn">[Copy Code]</button>
-                </p>
-            </div>
-
-            <div class="session-details">
-                <p>Duration: <span id="lobbyDuration">-- minutes</span></p>
-            </div>
-
-            <div class="players-section">
-                <p class="players-header">Players (<span id="playerCount">0</span>/4):</p>
-                <div class="players-list" id="playersList">
-                    <!-- Players will be added here dynamically -->
-                </div>
-            </div>
-
-            <div class="waiting-message" id="waitingMessage">
-                <p>Waiting for host to start...</p>
-            </div>
-
-            <div class="lobby-actions">
-                <button class="menu-btn" id="startSessionBtn" style="display: none;">[Start Session]</button>
-                <button class="link-btn" id="leaveLobbyBtn">[Leave]</button>
-            </div>
+      <div class="lobby-content">
+        <div class="session-info">
+          <p class="session-code-label">
+            Session Code: <span id="lobbySessionCode">------</span>
+          </p>
+          <p class="share-links">
+            <button class="link-btn" id="copyLinkBtn">[Copy Code]</button>
+          </p>
         </div>
+
+        <div class="session-details">
+          <p>Duration: <span id="lobbyDuration">-- minutes</span></p>
+        </div>
+
+        <div class="players-section">
+          <p class="players-header">
+            Players (<span id="playerCount">0</span>/4):
+          </p>
+          <div class="players-list" id="playersList">
+            <!-- Players will be added here dynamically -->
+          </div>
+        </div>
+
+        <div class="waiting-message" id="waitingMessage">
+          <p>Waiting for host to start...</p>
+        </div>
+
+        <div class="lobby-actions">
+          <button class="menu-btn" id="startSessionBtn" style="display: none">
+            [Start Session]
+          </button>
+          <button class="link-btn" id="leaveLobbyBtn">[Leave]</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Session Page -->
+    <div id="sessionPage" class="page">
+      <div class="session-container">
+        <!-- Timer Bar -->
+        <div class="timer-bar">
+          <div class="time-remaining" id="timeRemaining">14:52</div>
+          <div class="session-id-small">
+            Session: <span id="activeSessionCode">------</span>
+          </div>
+        </div>
+
+        <!-- Camera Feed & Skeleton Display -->
+        <div class="camera-display">
+          <div class="camera-container" id="cameraContainer">
+            <video id="cameraFeed" autoplay playsinline></video>
+            <canvas id="skeletonCanvas"></canvas>
+            <div class="camera-overlay">
+              <div class="score-badge" id="scoreBadge">87</div>
+              <div class="camera-status" id="cameraStatus">
+                <span class="status-dot"></span>
+                <span class="status-text">Tracking</span>
+              </div>
+            </div>
+          </div>
+          <div class="posture-status" id="postureStatus">
+            <span class="status-icon">✓</span>
+            <span class="status-text">Good Posture</span>
+          </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-icon">🔥</div>
+            <div class="stat-value" id="streakValue">12</div>
+            <div class="stat-label">Streak (min)</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-icon">⭐</div>
+            <div class="stat-value" id="pointsValue">+45</div>
+            <div class="stat-label">Points Gained</div>
+          </div>
+          <div class="stat-box clickable" id="rankStatBox">
+            <div class="stat-icon">📊</div>
+            <div class="stat-value" id="rankValue">#2</div>
+            <div class="stat-label">Your Rank</div>
+          </div>
+        </div>
+
+        <!-- Posture Feedback -->
+        <div class="feedback-section">
+          <div class="feedback-title">Real-Time Analysis</div>
+          <div class="feedback-items" id="feedbackItems">
+            <div class="feedback-item good">
+              <span class="feedback-icon">✓</span>
+              <span>Shoulders aligned</span>
+            </div>
+            <div class="feedback-item good">
+              <span class="feedback-icon">✓</span>
+              <span>Neck angle optimal</span>
+            </div>
+            <div class="feedback-item warning">
+              <span class="feedback-icon">⚠</span>
+              <span>Spine slightly forward</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="session-actions">
+          <button class="secondary-btn" id="endSessionBtn">End Session</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leaderboard Page -->
+    <div id="leaderboardPage" class="page">
+      <div class="leaderboard-container">
+        <div class="leaderboard-header">
+          <button class="back-btn" id="backToSessionBtn">← Back</button>
+          <h1>🏆 Live Leaderboard</h1>
+          <div class="session-info-small">
+            Session: <span id="leaderboardSessionCode">------</span>
+          </div>
+        </div>
+
+        <div class="leaderboard-stats">
+          <div class="stat-card">
+            <div class="stat-card-label">Your Rank</div>
+            <div class="stat-card-value" id="yourRankLarge">#2</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Your Score</div>
+            <div class="stat-card-value" id="yourScoreLarge">87</div>
+          </div>
+        </div>
+
+        <div class="leaderboard-full">
+          <div class="leaderboard-list" id="leaderboardFullList">
+            <div class="leaderboard-item rank-1">
+              <span class="rank">🥇</span>
+              <div class="player-info">
+                <span class="player">Alice</span>
+                <span class="player-stats">92 pts • 15 min streak</span>
+              </div>
+            </div>
+            <div class="leaderboard-item rank-2 highlight">
+              <span class="rank">🥈</span>
+              <div class="player-info">
+                <span class="player">You</span>
+                <span class="player-stats">87 pts • 12 min streak</span>
+              </div>
+            </div>
+            <div class="leaderboard-item rank-3">
+              <span class="rank">🥉</span>
+              <div class="player-info">
+                <span class="player">Bob</span>
+                <span class="player-stats">79 pts • 8 min streak</span>
+              </div>
+            </div>
+            <div class="leaderboard-item rank-4">
+              <span class="rank">#4</span>
+              <div class="player-info">
+                <span class="player">Charlie</span>
+                <span class="player-stats">65 pts • 5 min streak</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="leaderboard-footer">
+          <p class="update-info">Updates every second</p>
+        </div>
+      </div>
     </div>
 
     <script src="socket.io.min.js"></script>
     <script src="popup.js"></script>
-
-</body>
-
+  </body>
 </html>
