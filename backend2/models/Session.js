@@ -10,7 +10,7 @@ class Session {
         this.playerCounter = 0;
     }
 
-    addPlayer(socketId) {
+    addPlayer(socketId, playerName = null) {
         if (this.players.size >= 4) {
             return { success: false, error: 'Session is full (max 4 players)' };
         }
@@ -20,12 +20,15 @@ class Session {
         }
 
         this.playerCounter++;
-        const names = ['Alice', 'Bob', 'Charlie', 'Diana'];
+        
+        // Use provided name or fallback to default names
+        const defaultNames = ['Alice', 'Bob', 'Charlie', 'Diana'];
+        const finalName = playerName || defaultNames[this.playerCounter - 1] || `Player ${this.playerCounter}`;
 
         const player = {
             socketId,
             playerId: `player_${this.playerCounter}`,
-            playerName: names[this.playerCounter - 1],
+            playerName: finalName,
             isHost: socketId === this.creatorSocketId,
             isReady: true,
             score: 0,

@@ -8,11 +8,11 @@ function setupSocketHandlers(io) {
         console.log(`New client connected: ${socket.id}`);
 
         socket.on('create_session', (data) => {
-            const { duration } = data;
+            const { duration, playerName } = data;
             const sessionCode = generateSessionCode();
 
             const session = new Session(sessionCode, duration, socket.id);
-            const result = session.addPlayer(socket.id);
+            const result = session.addPlayer(socket.id, playerName);
 
             if (!result.success) {
                 socket.emit('error', { message: result.error });
@@ -30,7 +30,7 @@ function setupSocketHandlers(io) {
         });
 
         socket.on('join_session', (data) => {
-            const { sessionCode } = data;
+            const { sessionCode, playerName } = data;
             const session = sessions.get(sessionCode);
 
             if (!session) {
@@ -38,7 +38,7 @@ function setupSocketHandlers(io) {
                 return;
             }
 
-            const result = session.addPlayer(socket.id);
+            const result = session.addPlayer(socket.id, playerName);
 
             if (!result.success) {
                 socket.emit('error', { message: result.error });

@@ -191,7 +191,7 @@ h1 {
   color: #e0e0e0;
 }
 
-/* Join Session Page */
+/* Join Session Page & Name Entry Page */
 .join-content {
   width: 100%;
   max-width: 400px;
@@ -245,6 +245,17 @@ h1 {
 .session-code-input::placeholder {
   color: #4a4a4a;
   letter-spacing: 8px;
+}
+
+/* Name input - same styling but smaller font for text */
+#playerNameInput {
+  font-size: 24px;
+  letter-spacing: 2px;
+  font-weight: normal;
+}
+
+#playerNameInput::placeholder {
+  letter-spacing: 2px;
 }
 
 .input-hint {

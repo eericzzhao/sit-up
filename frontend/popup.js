@@ -2,10 +2,14 @@ const SOCKET_URL = "http://localhost:3000";
 let socket = null;
 let currentSession = null;
 let currentPlayer = null;
+let playerName = ""; // Store player name
+let selectedDuration = null; // Store selected duration
+let sessionCodeToJoin = null; // Store session code when joining
 
 const pages = {
   mainMenu: document.getElementById("mainMenuPage"),
   duration: document.getElementById("durationPage"),
+  nameEntry: document.getElementById("nameEntryPage"),
   join: document.getElementById("joinPage"),
   lobby: document.getElementById("lobbyPage"),
   session: document.getElementById("sessionPage"),
@@ -70,7 +74,13 @@ function initSocket() {
   socket.on("session_started", (data) => {
     console.log("Session started:", data);
     currentSession = data.sessionData;
-    alert("Session started! (Active session page coming soon)");
+    
+    // Copy session code to active session page
+    document.getElementById("activeSessionCode").textContent = currentSession.sessionId;
+    
+    // Navigate to active session page
+    showPage("session");
+    startPostureTracking();
   });
 
   socket.on("session_finished", (data) => {
@@ -135,16 +145,56 @@ document.getElementById("joinSessionBtn").addEventListener("click", () => {
 // Duration Selection
 document.querySelectorAll(".duration-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
-    const duration = parseInt(btn.dataset.duration);
-    const minutes = duration / 60;
-
+    selectedDuration = parseInt(btn.dataset.duration);
+    const minutes = selectedDuration / 60;
     document.getElementById("lobbyDuration").textContent = `${minutes} minutes`;
-
-    socket.emit("create_session", { duration });
+    
+    // Go to name entry page instead of creating session immediately
+    showPage("nameEntry");
   });
 });
 
 document.getElementById("cancelDurationBtn").addEventListener("click", () => {
+  showPage("mainMenu");
+});
+
+// Name Entry Page 
+document.getElementById("nameConfirmBtn").addEventListener("click", () => {
+  const name = document.getElementById("playerNameInput").value.trim();
+
+  if (!name) {
+    alert("Please enter your name");
+    return;
+  }
+
+  if (name.length > 20) {
+    alert("Name must be 20 characters or less");
+    return;
+  }
+
+  playerName = name;
+  
+  // If we came from duration selection (creating session)
+  if (selectedDuration) {
+    console.log("Creating session with name:", playerName, "duration:", selectedDuration);
+    socket.emit("create_session", { duration: selectedDuration, playerName: playerName });
+    selectedDuration = null; // Reset
+  } 
+  // If we came from join session
+  else if (sessionCodeToJoin) {
+    console.log("Joining session:", sessionCodeToJoin, "with name:", playerName);
+    socket.emit("join_session", { sessionCode: sessionCodeToJoin, playerName: playerName });
+    sessionCodeToJoin = null; // Reset
+  }
+
+  // Clear input for next time
+  document.getElementById("playerNameInput").value = "";
+});
+
+document.getElementById("cancelNameBtn").addEventListener("click", () => {
+  document.getElementById("playerNameInput").value = "";
+  selectedDuration = null;
+  sessionCodeToJoin = null;
   showPage("mainMenu");
 });
 
@@ -162,11 +212,13 @@ document.getElementById("joinConfirmBtn").addEventListener("click", () => {
     return;
   }
 
-  console.log("Joining session:", sessionCode);
-  socket.emit("join_session", { sessionCode });
-
-  // Clear input for next time
+  sessionCodeToJoin = sessionCode;
+  
+  // Clear input
   document.getElementById("sessionCodeInput").value = "";
+  
+  // Go to name entry page
+  showPage("nameEntry");
 });
 
 document.getElementById("cancelJoinBtn").addEventListener("click", () => {
@@ -195,14 +247,6 @@ document.getElementById("copyLinkBtn").addEventListener("click", () => {
 document.getElementById("startSessionBtn").addEventListener("click", () => {
   if (currentSession) {
     socket.emit("start_session", { sessionCode: currentSession.sessionId });
-
-    // Copy session code to active session page
-    document.getElementById("activeSessionCode").textContent =
-      currentSession.sessionId;
-
-    // Navigate to active session page
-    showPage("session");
-    startPostureTracking();
   }
 });
 
