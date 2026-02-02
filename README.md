@@ -8,12 +8,12 @@ computer vision eyepop posture game for the SanD Hacks hackathon
 
 ## Features
 
-- ✅ **Chrome Extension UI** 
-- ✅ **Real-time body keypoints** → **skeleton overlay**
-- ✅ **Posture score** + “green zone” time tracking
-- ✅ **Multiplayer sessions** (up to 4 players) 
-- ✅ **Host settings i.e. timers** (5/10/15/30 minutes)
-- ✅ Server picks the **winner by longest green-zone time**
+- **Chrome Extension UI** 
+- **Real-time body keypoints** → **skeleton overlay**
+- **Posture score** + “green zone” time tracking
+- **Multiplayer sessions** (up to 4 players) 
+- **Host settings i.e. timers** (5/10/15/30 minutes)
+- Server picks the **winner by longest green-zone time**
 
 ---
 
