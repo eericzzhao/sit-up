@@ -1,35 +1,19 @@
 {
-<<<<<<< HEAD
   "manifest_version": 3,
   "name": "SitUp - Posture Competition",
   "version": "1.0.0",
   "description": "Compete with friends for the best posture",
-  "permissions": ["storage"],
-  "host_permissions": ["http://localhost:3000/*"],
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "http://localhost:3000/*"
+  ],
   "action": {
     "default_popup": "popup.html"
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; connect-src http://localhost:3000 ws://localhost:3000 https://*.eyepop.ai wss://*.eyepop.ai;"
   }
 }
-=======
-    "manifest_version": 3,
-    "name": "SitUp - Posture Competition",
-    "version": "1.0.0",
-    "description": "Compete with friends for the best posture",
-    "permissions": [
-        "storage",
-        "activeTab"
-    ],
-    "host_permissions": [
-        "http://localhost:3000/*"
-    ],
-    "action": {
-        "default_popup": "popup.html"
-    },
-    "content_security_policy": {
-        "extension_pages": "script-src 'self' 'unsafe-eval'; object-src 'self'; connect-src http://localhost:3000 ws://localhost:3000 https://*.eyepop.ai wss://*.eyepop.ai;"
-    }
-}
->>>>>>> dadca22 (rough version of the code up)
