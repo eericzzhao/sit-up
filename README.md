@@ -1,7 +1,6 @@
-# sit-up
-computer vision eyepop posture game for the SanD Hacks hackathon
-# SitUp — Posture Competition Chrome Extension 
+# sit-up - Posture Competition Chrome Extension 
 
+computer vision eyepop posture game for the SanD Hacks hackathon
 **SitUp** is a Chrome extension that turns “good posture” into a lightweight multiplayer competition. It uses **EyePop** to detect body keypoints, draws a live **skeleton overlay**, converts posture into a **score**, and tracks how long each player stays in the **green zone**. A tiny **Node/Express + Socket.IO** backend hosts game sessions and a live leaderboard.
 
 ---
